@@ -1,0 +1,574 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Encuesta NPS — Comscore</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    /* ─── Comscore Brand Tokens ─── */
+    :root {
+      --midnight:   #08104D;
+      --indigo:     #26468C;
+      --indigo-lt:  #7282B8;
+      --tangerine:  #FFA04A;
+      --lime:       #B2F95F;
+      --white:      #FFFFFF;
+      --gray-1:     #F5F6FA;
+      --gray-2:     #D0D5E8;
+      --gray-3:     #8A94B0;
+      --text:       #08104D;
+      --red:        #D93025;
+      --radius:     14px;
+      --shadow:     0 6px 32px rgba(8,16,77,.12);
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Poppins', system-ui, sans-serif;
+      background: var(--gray-1);
+      color: var(--text);
+      min-height: 100dvh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* ─── Header ─── */
+    header {
+      background: var(--midnight);
+      padding: 18px 28px;
+      display: flex;
+      align-items: center;
+      gap: 0;
+    }
+    .logo-wrap { height: 32px; display: flex; align-items: center; }
+    .logo-wrap svg { height: 32px; width: auto; }
+
+    /* ─── Progress bar ─── */
+    .progress-wrap {
+      background: var(--midnight);
+      padding: 0 28px 18px;
+    }
+    .progress-track {
+      background: rgba(255,255,255,.18);
+      border-radius: 99px;
+      height: 4px;
+      overflow: hidden;
+    }
+    .progress-fill {
+      height: 100%;
+      background: var(--tangerine);
+      border-radius: 99px;
+      transition: width .45s cubic-bezier(.4,0,.2,1);
+    }
+    .progress-meta {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-top: 8px;
+    }
+    .progress-event {
+      color: rgba(255,255,255,.55);
+      font-size: 12px;
+      font-weight: 500;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      max-width: 60%;
+    }
+    .progress-label {
+      color: rgba(255,255,255,.7);
+      font-size: 12px;
+      font-weight: 600;
+    }
+
+    /* ─── Card ─── */
+    main {
+      flex: 1;
+      display: flex;
+      align-items: flex-start;
+      justify-content: center;
+      padding: 36px 16px 56px;
+    }
+    .card {
+      background: var(--white);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      width: 100%;
+      max-width: 600px;
+      padding: 44px 40px;
+    }
+    @media (max-width: 480px) { .card { padding: 28px 20px; } }
+
+    /* ─── Step transitions ─── */
+    .step { display: none; animation: fadeUp .35s ease both; }
+    .step.active { display: block; }
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(18px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    /* ─── Typography ─── */
+    .step-eyebrow {
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: .1em;
+      text-transform: uppercase;
+      color: var(--tangerine);
+      margin-bottom: 10px;
+    }
+    h2 {
+      font-size: 22px;
+      font-weight: 700;
+      line-height: 1.3;
+      color: var(--midnight);
+      margin-bottom: 32px;
+    }
+    @media (max-width: 480px) { h2 { font-size: 18px; } }
+
+    /* ─── NPS Scale ─── */
+    .nps-grid {
+      display: grid;
+      grid-template-columns: repeat(11, 1fr);
+      gap: 6px;
+      margin-bottom: 10px;
+    }
+    @media (max-width: 480px) { .nps-grid { gap: 3px; } }
+
+    .nps-btn {
+      aspect-ratio: 1;
+      border: 2px solid var(--gray-2);
+      border-radius: 8px;
+      background: var(--white);
+      font-size: 14px;
+      font-weight: 600;
+      font-family: inherit;
+      cursor: pointer;
+      transition: all .15s;
+      color: var(--text);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .nps-btn:hover:not(.selected) { border-color: var(--indigo); color: var(--indigo); }
+    .nps-btn.selected { color: var(--white) !important; border-color: transparent; }
+    .nps-btn.det.selected  { background: #D93025; }
+    .nps-btn.pas.selected  { background: #F9AB00; }
+    .nps-btn.pro.selected  { background: var(--midnight); }
+
+    .nps-legend {
+      display: grid;
+      grid-template-columns: repeat(11, 1fr);
+      gap: 6px;
+      margin-bottom: 8px;
+    }
+    .nps-legend-det { grid-column: 1 / 8; }
+    .nps-legend-pas { grid-column: 8 / 10; }
+    .nps-legend-pro { grid-column: 10 / 12; }
+    .nps-legend span {
+      display: block;
+      font-size: 10px;
+      font-weight: 600;
+      letter-spacing: .05em;
+      text-transform: uppercase;
+      text-align: center;
+      padding: 3px 4px;
+      border-radius: 4px;
+    }
+    .nps-legend-det span { background: #FDECEA; color: #D93025; }
+    .nps-legend-pas span { background: #FEF7E0; color: #B46E00; }
+    .nps-legend-pro span { background: #EEF1FA; color: var(--midnight); }
+
+    .nps-labels {
+      display: flex;
+      justify-content: space-between;
+      font-size: 11px;
+      font-weight: 500;
+      color: var(--gray-3);
+      margin-bottom: 32px;
+    }
+
+    /* ─── Textarea ─── */
+    .textarea-hint {
+      font-size: 12px;
+      color: var(--gray-3);
+      margin-bottom: 8px;
+    }
+    textarea {
+      width: 100%;
+      border: 2px solid var(--gray-2);
+      border-radius: 10px;
+      padding: 14px 16px;
+      font-size: 14px;
+      font-family: inherit;
+      color: var(--text);
+      resize: vertical;
+      min-height: 130px;
+      transition: border-color .15s;
+      margin-bottom: 32px;
+      background: var(--gray-1);
+    }
+    textarea:focus { outline: none; border-color: var(--indigo); background: var(--white); }
+
+    /* ─── Radio options ─── */
+    .radio-group { display: flex; flex-direction: column; gap: 12px; margin-bottom: 32px; }
+    .radio-option {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      padding: 18px 20px;
+      border: 2px solid var(--gray-2);
+      border-radius: 12px;
+      cursor: pointer;
+      transition: all .15s;
+      font-size: 15px;
+      font-weight: 500;
+    }
+    .radio-option:hover { border-color: var(--indigo); background: rgba(38,70,140,.04); }
+    .radio-option.selected { border-color: var(--indigo); background: rgba(38,70,140,.06); }
+    .radio-option input { display: none; }
+    .radio-dot {
+      width: 22px; height: 22px; min-width: 22px;
+      border: 2px solid var(--gray-2);
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      transition: all .15s;
+    }
+    .radio-option.selected .radio-dot { border-color: var(--indigo); background: var(--indigo); }
+    .radio-option.selected .radio-dot::after {
+      content: '';
+      width: 8px; height: 8px;
+      background: var(--white);
+      border-radius: 50%;
+    }
+    .radio-emoji { font-size: 18px; }
+
+    /* ─── Primary button ─── */
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      padding: 15px 32px;
+      border-radius: 10px;
+      font-size: 15px;
+      font-weight: 700;
+      font-family: inherit;
+      cursor: pointer;
+      transition: all .15s;
+      border: none;
+      width: 100%;
+      letter-spacing: .01em;
+    }
+    .btn-primary {
+      background: var(--tangerine);
+      color: var(--midnight);
+    }
+    .btn-primary:hover:not(:disabled) { background: #FF8C1A; box-shadow: 0 4px 16px rgba(255,160,74,.35); }
+    .btn-primary:disabled { opacity: .38; cursor: not-allowed; }
+
+    /* ─── Send status ─── */
+    .send-status {
+      text-align: center;
+      font-size: 13px;
+      margin-top: 12px;
+      min-height: 18px;
+      color: var(--gray-3);
+    }
+    .send-status.error { color: var(--red); }
+    .send-status.ok    { color: #2E7D32; }
+
+    /* ─── Thank-you ─── */
+    #step-thanks { text-align: center; padding: 12px 0; }
+    .thanks-mark {
+      width: 80px; height: 80px;
+      background: var(--lime);
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      margin: 0 auto 28px;
+    }
+    .thanks-mark svg { width: 38px; height: 38px; }
+    .event-badge {
+      display: inline-block;
+      background: rgba(8,16,77,.07);
+      color: var(--midnight);
+      font-weight: 700;
+      font-size: 13px;
+      border-radius: 99px;
+      padding: 6px 18px;
+      margin-bottom: 16px;
+    }
+    #step-thanks h2 { margin-bottom: 10px; }
+    #step-thanks p { color: var(--gray-3); font-size: 14px; line-height: 1.7; max-width: 380px; margin: 0 auto; }
+
+    /* ─── Intro screen ─── */
+    .intro-photo-wrap {
+      width: calc(100% + 80px);
+      margin: -44px -40px 0;
+      border-radius: var(--radius) var(--radius) 0 0;
+      overflow: hidden;
+      height: 300px;
+    }
+    @media (max-width: 480px) {
+      .intro-photo-wrap { width: calc(100% + 40px); margin: -28px -20px 0; height: 220px; }
+    }
+    .intro-photo {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      object-position: center top;
+      display: block;
+    }
+    .intro-body {
+      font-size: 15px;
+      line-height: 1.65;
+      color: var(--text);
+      margin-bottom: 20px;
+    }
+    .intro-bullets {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      margin-bottom: 32px;
+      padding: 0;
+    }
+    .intro-bullets li {
+      font-size: 14px;
+      color: var(--gray-3);
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      line-height: 1.5;
+    }
+    .intro-bullets li::before {
+      content: '✓';
+      color: var(--midnight);
+      font-weight: 700;
+      flex-shrink: 0;
+      margin-top: 1px;
+    }
+
+    /* ─── Divider ─── */
+    .divider {
+      height: 1px;
+      background: var(--gray-2);
+      margin: 28px 0;
+    }
+  </style>
+</head>
+<body>
+
+<!-- Formulario oculto para que Netlify detecte los campos -->
+<form name="nps-comscore" data-netlify="true" hidden>
+  <input name="timestamp">
+  <input name="evento">
+  <input name="nps_score">
+  <input name="nps_categoria">
+  <input name="razon_calificacion">
+  <input name="mejoras">
+  <input name="participaria_de_nuevo">
+</form>
+
+<header>
+  <div class="logo-wrap">
+    <svg viewBox="0 0 555.05 72" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" id="Layer_2" overflow="hidden" aria-label="Comscore"><g id="Comscore_Logo"><g><g><path d="M102.87 20.69C105.45 16.17 108.97 12.65 113.44 10.12 117.9 7.6 122.91 6.33 128.46 6.33 134.95 6.33 140.63 7.99 145.52 11.32 150.4 14.65 153.81 19.25 155.75 25.13L142.36 25.13C141.03 22.36 139.16 20.28 136.74 18.89 134.33 17.5 131.54 16.81 128.38 16.81 125 16.81 121.99 17.6 119.35 19.18 116.71 20.76 114.66 22.99 113.19 25.88 111.72 28.76 110.99 32.15 110.99 36.03 110.99 39.91 111.72 43.23 113.19 46.14 114.66 49.05 116.71 51.3 119.35 52.88 121.98 54.46 124.99 55.25 128.38 55.25 131.54 55.25 134.33 54.54 136.74 53.13 139.15 51.72 141.03 49.62 142.36 46.85L155.75 46.85C153.81 52.79 150.41 57.4 145.56 60.7 140.71 64 135.01 65.65 128.46 65.65 122.91 65.65 117.91 64.39 113.44 61.86 108.97 59.34 105.45 55.83 102.87 51.33 100.29 46.84 99 41.73 99 36.02 99 30.31 100.29 25.19 102.87 20.67Z" fill="#FFFFFF"/><path d="M175.81 61.92C171.26 59.37 167.66 55.83 164.99 51.31 162.33 46.79 161 41.67 161 35.96 161 30.25 162.33 25.21 164.99 20.69 167.65 16.17 171.26 12.63 175.81 10.08 180.36 7.53 185.35 6.25 190.79 6.25 196.23 6.25 201.29 7.53 205.81 10.08 210.33 12.63 213.91 16.17 216.54 20.69 219.17 25.21 220.49 30.3 220.49 35.96 220.49 41.62 219.17 46.79 216.54 51.31 213.9 55.83 210.31 59.37 205.77 61.92 201.22 64.47 196.23 65.75 190.79 65.75 185.35 65.75 180.36 64.47 175.81 61.92ZM200.02 52.97C202.68 51.39 204.76 49.13 206.26 46.19 207.76 43.25 208.51 39.84 208.51 35.96 208.51 32.08 207.76 28.68 206.26 25.77 204.76 22.86 202.68 20.63 200.02 19.07 197.36 17.52 194.28 16.74 190.78 16.74 187.28 16.74 184.19 17.52 181.5 19.07 178.81 20.62 176.72 22.86 175.22 25.77 173.72 28.68 172.97 32.08 172.97 35.96 172.97 39.84 173.72 43.25 175.22 46.19 176.72 49.13 178.81 51.39 181.5 52.97 184.19 54.55 187.28 55.34 190.78 55.34 194.28 55.34 197.35 54.55 200.02 52.97Z" fill="#FFFFFF"/><path d="M289.87 7.09 289.87 65.16 278.22 65.16 278.22 27.39 262.66 65.16 253.84 65.16 238.2 27.39 238.2 65.16 226.55 65.16 226.55 7.09 239.78 7.09 258.25 50.27 276.72 7.09 289.87 7.09Z" fill="#FFFFFF"/><path d="M307.8 63.66C304.56 62.27 301.99 60.28 300.1 57.67 298.21 55.06 297.24 51.99 297.19 48.44L309.67 48.44C309.84 50.83 310.68 52.71 312.21 54.1 313.74 55.49 315.83 56.18 318.49 56.18 321.15 56.18 323.34 55.53 324.9 54.23 326.45 52.93 327.23 51.22 327.23 49.11 327.23 47.39 326.7 45.98 325.65 44.87 324.6 43.76 323.28 42.89 321.7 42.25 320.12 41.61 317.94 40.91 315.17 40.13 311.4 39.02 308.33 37.92 305.98 36.84 303.62 35.76 301.6 34.12 299.91 31.93 298.22 29.74 297.37 26.81 297.37 23.15 297.37 19.71 298.23 16.72 299.95 14.16 301.67 11.61 304.08 9.65 307.19 8.29 310.3 6.93 313.85 6.25 317.84 6.25 323.83 6.25 328.7 7.71 332.44 10.62 336.18 13.53 338.25 17.6 338.64 22.81L325.83 22.81C325.72 20.81 324.87 19.16 323.29 17.86 321.71 16.56 319.61 15.91 317.01 15.91 314.74 15.91 312.92 16.49 311.56 17.66 310.2 18.82 309.52 20.52 309.52 22.73 309.52 24.28 310.03 25.57 311.06 26.6 312.09 27.63 313.36 28.46 314.89 29.1 316.42 29.74 318.56 30.47 321.34 31.3 325.11 32.41 328.19 33.52 330.58 34.63 332.96 35.74 335.02 37.4 336.74 39.62 338.46 41.84 339.32 44.75 339.32 48.36 339.32 51.47 338.51 54.35 336.91 57.01 335.3 59.67 332.94 61.79 329.84 63.38 326.73 64.96 323.04 65.75 318.77 65.75 314.72 65.75 311.07 65.06 307.83 63.67Z" fill="#FFFFFF"/><path d="M347.87 20.69C350.45 16.17 353.97 12.65 358.44 10.12 362.9 7.6 367.91 6.33 373.46 6.33 379.95 6.33 385.63 7.99 390.52 11.32 395.4 14.65 398.81 19.25 400.75 25.13L387.36 25.13C386.03 22.36 384.16 20.28 381.74 18.89 379.33 17.5 376.54 16.81 373.38 16.81 370 16.81 366.99 17.6 364.35 19.18 361.71 20.76 359.66 22.99 358.19 25.88 356.72 28.76 355.99 32.15 355.99 36.03 355.99 39.91 356.72 43.23 358.19 46.14 359.66 49.05 361.71 51.3 364.35 52.88 366.98 54.46 369.99 55.25 373.38 55.25 376.54 55.25 379.33 54.54 381.74 53.13 384.15 51.72 386.03 49.62 387.36 46.85L400.75 46.85C398.81 52.79 395.41 57.4 390.56 60.7 385.71 64 380.01 65.65 373.46 65.65 367.91 65.65 362.91 64.39 358.44 61.86 353.97 59.34 350.45 55.83 347.87 51.33 345.29 46.84 344 41.73 344 36.02 344 30.31 345.29 25.19 347.87 20.67Z" fill="#FFFFFF"/><path d="M420.79 61.92C416.24 59.37 412.64 55.83 409.97 51.31 407.31 46.79 405.98 41.67 405.98 35.96 405.98 30.25 407.31 25.21 409.97 20.69 412.63 16.17 416.24 12.63 420.79 10.08 425.34 7.53 430.33 6.25 435.77 6.25 441.21 6.25 446.27 7.53 450.79 10.08 455.31 12.63 458.89 16.17 461.52 20.69 464.15 25.21 465.47 30.3 465.47 35.96 465.47 41.62 464.15 46.79 461.52 51.31 458.88 55.83 455.29 59.37 450.75 61.92 446.2 64.47 441.21 65.75 435.77 65.75 430.33 65.75 425.34 64.47 420.79 61.92ZM445.01 52.97C447.67 51.39 449.75 49.13 451.25 46.19 452.75 43.25 453.5 39.84 453.5 35.96 453.5 32.08 452.75 28.68 451.25 25.77 449.75 22.86 447.67 20.63 445.01 19.07 442.35 17.52 439.27 16.74 435.77 16.74 432.27 16.74 429.18 17.52 426.49 19.07 423.8 20.62 421.71 22.86 420.21 25.77 418.71 28.68 417.96 32.08 417.96 35.96 417.96 39.84 418.71 43.25 420.21 46.19 421.71 49.13 423.8 51.39 426.49 52.97 429.18 54.55 432.27 55.34 435.77 55.34 439.27 55.34 442.34 54.55 445.01 52.97Z" fill="#FFFFFF"/><path d="M501.49 65.16 488.68 42.53 483.19 42.53 483.19 65.16 471.54 65.16 471.54 7.09 493.34 7.09C497.83 7.09 501.66 7.88 504.82 9.46 507.98 11.04 510.35 13.18 511.93 15.87 513.51 18.56 514.3 21.57 514.3 24.9 514.3 28.73 513.19 32.18 510.97 35.26 508.75 38.34 505.45 40.46 501.07 41.63L514.96 65.18 501.48 65.18ZM483.19 33.8 492.92 33.8C496.08 33.8 498.44 33.04 499.99 31.51 501.54 29.98 502.32 27.86 502.32 25.14 502.32 22.42 501.54 20.41 499.99 18.94 498.44 17.47 496.08 16.74 492.92 16.74L483.19 16.74 483.19 33.8Z" fill="#FFFFFF"/><path d="M533 16.49 533 31.05 552.55 31.05 552.55 40.29 533 40.29 533 55.68 555.05 55.68 555.05 65.16 521.35 65.16 521.35 7 555.05 7 555.05 16.48 533 16.48Z" fill="#FFFFFF"/></g><g><path d="M54 18 54 0 0 0 0 54 18 54 18 18 54 18Z" fill="#FFFFFF"/><path d="M54 54 18 54 18 72 72 72 72 18 54 18 54 54Z" fill="#FFFFFF"/></g></g></g></svg>
+  </div>
+</header>
+
+<div class="progress-wrap">
+  <div class="progress-track">
+    <div class="progress-fill" id="progressFill" style="width:25%"></div>
+  </div>
+  <div class="progress-meta">
+    <span class="progress-event" id="progressEvent"></span>
+    <span class="progress-label" id="progressLabel"></span>
+  </div>
+</div>
+
+<main>
+  <div class="card">
+
+    <!-- STEP 0: Bienvenida -->
+    <div class="step active" id="step-0">
+      <div class="intro-photo-wrap">
+        <img src="foto-evento.jpg" alt="Casa Comscore" class="intro-photo" />
+      </div>
+      <p class="step-eyebrow" style="margin-top:24px">Encuesta de satisfacción</p>
+      <h2 style="margin-bottom:12px">Tu opinión nos importa</h2>
+      <p class="intro-body">Te invitamos a responder <strong>4 preguntas breves</strong> sobre tu experiencia en <strong id="intro-evento"></strong>. Solo toma 2 minutos.</p>
+      <ul class="intro-bullets">
+        <li>Tus respuestas son <strong>completamente anónimas</strong></li>
+        <li>Los datos se usan únicamente para mejorar futuros eventos</li>
+        <li>No hay respuestas correctas o incorrectas</li>
+      </ul>
+      <button class="btn btn-primary" onclick="goTo(1)">Comenzar encuesta →</button>
+    </div>
+
+    <!-- STEP 1: NPS -->
+    <div class="step" id="step-1">
+      <p class="step-eyebrow">Satisfacción general</p>
+      <h2 id="nps-question">¿Qué tan probable es que recomiendes este evento a un colega o amigo?</h2>
+      <div class="nps-grid" id="npsGrid"></div>
+      <div class="nps-labels">
+        <span>Nada probable</span>
+        <span>Extremadamente probable</span>
+      </div>
+      <button class="btn btn-primary" id="btn1" disabled onclick="goTo(2)">Continuar →</button>
+    </div>
+
+    <!-- STEP 2: Razón de la calificación -->
+    <div class="step" id="step-2">
+      <p class="step-eyebrow">Tu calificación</p>
+      <h2 id="razon-question">Ayúdanos a entender las razones detrás de tu calificación</h2>
+      <p class="textarea-hint">Tu respuesta es opcional. Puedes continuar sin escribir nada.</p>
+      <textarea id="razon" placeholder="Ej: el contenido fue muy relevante, el espacio estuvo bien organizado…"></textarea>
+      <button class="btn btn-primary" onclick="goTo(3)">Continuar →</button>
+    </div>
+
+    <!-- STEP 3: Mejoras -->
+    <div class="step" id="step-3">
+      <p class="step-eyebrow">Mejoras</p>
+      <h2>¿Qué podríamos hacer diferente en la próxima edición?</h2>
+      <p class="textarea-hint">Tu respuesta es opcional. Si no tienes comentarios, haz clic en Continuar.</p>
+      <textarea id="mejoras" placeholder="Ej: más tiempo para networking, temas más especializados, mejor app…"></textarea>
+      <button class="btn btn-primary" onclick="goTo(4)">Continuar →</button>
+    </div>
+
+    <!-- STEP 4: Participación futura -->
+    <div class="step" id="step-4">
+      <p class="step-eyebrow">Eventos futuros</p>
+      <h2>¿Te gustaría participar en un evento similar en el futuro?</h2>
+      <div class="radio-group">
+        <label class="radio-option" data-value="Sí">
+          <input type="radio" name="futuro" value="Sí">
+          <div class="radio-dot"></div>
+          <span class="radio-emoji">🙌</span>
+          Sí, definitivamente
+        </label>
+        <label class="radio-option" data-value="Tal vez">
+          <input type="radio" name="futuro" value="Tal vez">
+          <div class="radio-dot"></div>
+          <span class="radio-emoji">🤔</span>
+          Tal vez, depende del tema
+        </label>
+        <label class="radio-option" data-value="No">
+          <input type="radio" name="futuro" value="No">
+          <div class="radio-dot"></div>
+          <span class="radio-emoji">🙏</span>
+          No por ahora
+        </label>
+      </div>
+      <button class="btn btn-primary" id="btn4" disabled onclick="submitSurvey()">Enviar encuesta</button>
+      <div class="send-status" id="sendStatus"></div>
+    </div>
+
+    <!-- STEP 4: Gracias -->
+    <div class="step" id="step-thanks">
+      <div class="thanks-mark">
+        <svg viewBox="0 0 24 24" fill="none" stroke="#08104D" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+          <polyline points="20 6 9 17 4 12"/>
+        </svg>
+      </div>
+      <div class="event-badge" id="thanksBadge"></div>
+      <h2>¡Gracias por tu participación!</h2>
+      <p>Tu opinión nos ayuda a seguir construyendo experiencias que realmente valen la pena. Nos vemos en el próximo evento.</p>
+    </div>
+
+  </div>
+</main>
+
+<script>
+  // ─── CONFIG ───────────────────────────────────────────────────────────────
+  // Reemplaza esta URL con la que genera setup.sh al correrlo por primera vez
+  const APPS_SCRIPT_URL = 'PENDIENTE_EJECUTAR_SETUP';
+  // Sheet ID (ya creado automáticamente):
+  const SHEET_ID = '1p2jaEFDME6EFNYvQMLeHVhipPa7IUKDQgizRMgcTM48';
+  // ─────────────────────────────────────────────────────────────────────────
+
+  const params    = new URLSearchParams(window.location.search);
+  const eventoRaw = params.get('evento') || 'Casa Comscore';
+  const evento    = decodeURIComponent(eventoRaw);
+
+  document.getElementById('nps-question').textContent =
+    `¿Qué tan probable es que recomiendes "${evento}" a un colega o amigo?`;
+  document.getElementById('thanksBadge').textContent   = evento;
+  document.getElementById('progressEvent').textContent = evento;
+  document.getElementById('intro-evento').textContent  = evento;
+
+  let npsScore    = null;
+  let futuroValue = null;
+  let currentStep = 0;
+
+  // ─── NPS grid ─────────────────────────────────────────────────────────────
+  const grid = document.getElementById('npsGrid');
+  for (let i = 0; i <= 10; i++) {
+    const btn = document.createElement('button');
+    btn.textContent = i;
+    btn.type        = 'button';
+    btn.className   = 'nps-btn ' + (i <= 6 ? 'det' : i <= 8 ? 'pas' : 'pro');
+    btn.setAttribute('aria-label', `Puntaje ${i}`);
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.nps-btn').forEach(b => b.classList.remove('selected'));
+      btn.classList.add('selected');
+      npsScore = i;
+      document.getElementById('btn1').disabled = false;
+    });
+    grid.appendChild(btn);
+  }
+
+  // ─── Radio group ─────────────────────────────────────────────────────────
+  document.querySelectorAll('.radio-option').forEach(opt => {
+    opt.addEventListener('click', () => {
+      document.querySelectorAll('.radio-option').forEach(o => o.classList.remove('selected'));
+      opt.classList.add('selected');
+      futuroValue = opt.dataset.value;
+      document.getElementById('btn4').disabled = false;
+    });
+  });
+
+  // ─── Navigation ──────────────────────────────────────────────────────────
+  const stepPct   = { 0: '0%', 1: '15%', 2: '40%', 3: '65%', 4: '88%', 5: '100%' };
+  const stepLabel = { 0: '', 1: 'Pregunta 1 de 4', 2: 'Pregunta 2 de 4', 3: 'Pregunta 3 de 4', 4: 'Pregunta 4 de 4', 5: '' };
+
+  function goTo(n) {
+    const fromId = currentStep === 5 ? 'step-thanks' : 'step-' + currentStep;
+    const toId   = n === 5 ? 'step-thanks' : 'step-' + n;
+    document.getElementById(fromId).classList.remove('active');
+    currentStep = n;
+    document.getElementById(toId).classList.add('active');
+    document.getElementById('progressFill').style.width  = stepPct[n] || '100%';
+    document.getElementById('progressLabel').textContent = stepLabel[n] || '';
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+
+  // ─── NPS category ────────────────────────────────────────────────────────
+  function npsCategoria(s) {
+    return s <= 6 ? 'Detractor' : s <= 8 ? 'Pasivo' : 'Promotor';
+  }
+
+  // ─── Submit ───────────────────────────────────────────────────────────────
+  function submitSurvey() {
+    document.getElementById('btn4').disabled = true;
+
+    goTo(5); // Avanza inmediatamente — nunca bloquea al usuario
+
+    // Envío a Netlify Forms en background
+    const fd = new FormData();
+    fd.append('form-name',           'nps-comscore');
+    fd.append('timestamp',           new Date().toISOString());
+    fd.append('evento',              evento);
+    fd.append('nps_score',           npsScore);
+    fd.append('nps_categoria',       npsCategoria(npsScore));
+    fd.append('razon_calificacion',  document.getElementById('razon').value.trim());
+    fd.append('mejoras',             document.getElementById('mejoras').value.trim());
+    fd.append('participaria_de_nuevo', futuroValue);
+
+    fetch('/', { method: 'POST', body: fd }).catch(() => {});
+  }
+</script>
+</body>
+</html>
